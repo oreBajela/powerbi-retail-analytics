@@ -149,6 +149,6 @@ CALCULATE(
 
 ## 👤 About
 
-Built by a Data Science student as a portfolio project demonstrating business intelligence skills.
+Built by a Data Science student as a portfolio project practicing business intelligence skills.
 
 **Skills demonstrated:** Power BI · Power Query · DAX · Star schema modeling · Data cleaning · KPI design · Dashboard storytelling
