@@ -1,0 +1,16 @@
+CustomerID,FirstName,LastName,Email,JoinDate,Segment
+C001,James,Carter,james.carter@email.com,2021-03-15,Premium
+C002,Sofia,Nguyen,sofia.nguyen@email.com,2022-07-20,Standard
+C003,Marcus,Williams,marcus.w@email.com,2021-11-08,Standard
+C004,Priya,Patel,priya.patel@email.com,2022-01-30,Premium
+C005,Tyler,Brooks,tyler.brooks@email.com,2023-02-14,Standard
+C006,Aisha,Johnson,aisha.j@email.com,2021-06-22,Premium
+C007,Daniel,Kim,daniel.kim@email.com,2022-09-05,Standard
+C008,Emma,Rodriguez,emma.r@email.com,2022-04-17,Standard
+C009,Noah,Thompson,noah.t@email.com,2021-12-01,Premium
+C010,Leila,Martinez,leila.m@email.com,2023-01-10,Standard
+C011,Ethan,Davis,ethan.d@email.com,2022-08-14,Standard
+C012,Zoe,Wilson,zoe.w@email.com,2021-05-03,Premium
+C013,Caleb,Anderson,caleb.a@email.com,2023-03-28,Standard
+C014,Maya,Thomas,maya.t@email.com,2022-10-19,Standard
+C015,Owen,Jackson,owen.j@email.com,2023-05-06,Standard

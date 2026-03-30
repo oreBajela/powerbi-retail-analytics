@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Retail Sales & Customer Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffa94d;
+    --text: #e8eaf6;
+    --muted: #7b80a8;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-text p { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
+  .header-meta { display: flex; align-items: center; gap: 20px; }
+  .badge {
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-family: var(--mono);
+    background: rgba(108,99,255,0.15); color: var(--accent); border: 1px solid rgba(108,99,255,0.3);
+  }
+  .date-label { font-size: 12px; color: var(--muted); }
+
+  /* FILTER BAR */
+  .filter-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .filter-bar label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .filter-bar select {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 12px; border-radius: 6px;
+    font-family: var(--font); font-size: 12px; cursor: pointer;
+    outline: none;
+  }
+  .filter-bar select:focus { border-color: var(--accent); }
+  .filter-sep { width: 1px; height: 24px; background: var(--border); }
+  .filter-reset {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: 6px 14px; border-radius: 6px; font-family: var(--font); font-size: 12px;
+    cursor: pointer; transition: all .2s;
+  }
+  .filter-reset:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* MAIN LAYOUT */
+  main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+  .section-label {
+    font-size: 11px; font-family: var(--mono); color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 22px; position: relative; overflow: hidden;
+    transition: border-color .2s, transform .15s;
+  }
+  .kpi-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.purple::before { background: var(--accent); }
+  .kpi-card.teal::before { background: var(--accent2); }
+  .kpi-card.red::before { background: var(--accent3); }
+  .kpi-card.amber::before { background: var(--accent4); }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; }
+  .kpi-value { font-size: 30px; font-weight: 300; margin: 8px 0 4px; letter-spacing: -1px; }
+  .kpi-value span { font-size: 14px; font-weight: 500; vertical-align: super; }
+  .kpi-delta { font-size: 12px; font-family: var(--mono); }
+  .kpi-delta.up { color: var(--accent2); }
+  .kpi-delta.down { color: var(--accent3); }
+  .kpi-icon {
+    position: absolute; right: 20px; top: 20px;
+    font-size: 28px; opacity: 0.12;
+  }
+
+  /* CHARTS GRID */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px;
+  }
+  .chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .chart-card .sub { font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  .chart-wrap { position: relative; }
+
+  /* TABLE */
+  .table-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px; margin-bottom: 28px;
+  }
+  .table-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .table-card .sub { font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 8px 12px;
+    font-size: 10px; font-family: var(--mono); color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid rgba(46,50,80,0.5); transition: background .15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 12px; }
+  .segment-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-family: var(--mono); font-weight: 500;
+  }
+  .seg-premium { background: rgba(108,99,255,0.15); color: var(--accent); }
+  .seg-standard { background: rgba(123,128,168,0.15); color: var(--muted); }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .mini-bar-bg { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; }
+  .mini-bar { height: 4px; border-radius: 2px; background: var(--accent); }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 20px 32px;
+    font-size: 11px; color: var(--muted); border-top: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .charts-grid-3 { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+    header { padding: 14px 16px; }
+    .filter-bar { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-text">
+      <h1>Retail Analytics Dashboard</h1>
+      <p>Sales &amp; Customer Intelligence · FY 2023</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="badge">Power BI Portfolio Project</span>
+    <span class="date-label">Jan – Dec 2023</span>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <label>Region</label>
+  <select id="filter-region" onchange="applyFilters()">
+    <option value="All">All Regions</option>
+    <option value="North">North</option>
+    <option value="South">South</option>
+    <option value="East">East</option>
+    <option value="West">West</option>
+  </select>
+  <div class="filter-sep"></div>
+  <label>Segment</label>
+  <select id="filter-segment" onchange="applyFilters()">
+    <option value="All">All Segments</option>
+    <option value="Premium">Premium</option>
+    <option value="Standard">Standard</option>
+  </select>
+  <div class="filter-sep"></div>
+  <label>Category</label>
+  <select id="filter-category" onchange="applyFilters()">
+    <option value="All">All Categories</option>
+    <option value="Electronics">Electronics</option>
+    <option value="Fitness">Fitness</option>
+    <option value="Footwear">Footwear</option>
+    <option value="Accessories">Accessories</option>
+  </select>
+  <div class="filter-sep"></div>
+  <button class="filter-reset" onclick="resetFilters()">Reset Filters</button>
+</div>
+
+<main>
+  <!-- KPIs -->
+  <div class="section-label">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card purple">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-revenue">$0</div>
+      <div class="kpi-delta up" id="kpi-revenue-sub">—</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-icon">🧾</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value" id="kpi-orders">0</div>
+      <div class="kpi-delta up" id="kpi-orders-sub">—</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-label">Avg Order Value</div>
+      <div class="kpi-value" id="kpi-aov">$0</div>
+      <div class="kpi-delta" id="kpi-aov-sub">—</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">Profit Margin</div>
+      <div class="kpi-value" id="kpi-margin">0%</div>
+      <div class="kpi-delta" id="kpi-margin-sub">—</div>
+    </div>
+  </div>
+
+  <!-- Revenue Trend + Donut -->
+  <div class="section-label">Revenue Analysis</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Monthly Revenue Trend</h3>
+      <div class="sub">Total revenue by month across all regions</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Revenue by Region</h3>
+      <div class="sub">Share of total revenue per region</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="donutChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Bar + Scatter + Segment -->
+  <div class="section-label">Product & Customer Breakdown</div>
+  <div class="charts-grid-3">
+    <div class="chart-card">
+      <h3>Revenue by Category</h3>
+      <div class="sub">Compared across product lines</div>
+      <div class="chart-wrap" style="height:210px"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Orders vs Revenue per Customer</h3>
+      <div class="sub">Each dot = one customer</div>
+      <div class="chart-wrap" style="height:210px"><canvas id="scatterChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Premium vs Standard</h3>
+      <div class="sub">Revenue share by customer segment</div>
+      <div class="chart-wrap" style="height:210px"><canvas id="segmentChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top Customers Table -->
+  <div class="section-label">Customer Intelligence</div>
+  <div class="table-card">
+    <h3>Top Customers by Revenue</h3>
+    <div class="sub">Ranked by total spend · Click column headers to sort</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Segment</th>
+          <th>Orders</th>
+          <th>Total Revenue</th>
+          <th>Revenue Share</th>
+        </tr>
+      </thead>
+      <tbody id="customer-table"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  Built as a Power BI Portfolio Project · Data Science Student ·
+  <a href="https://github.com" target="_blank">View on GitHub</a>
+  · Tools: Power BI Service · Power Query · DAX · Python
+</footer>
+
+<script>
+// ─── RAW DATA ───────────────────────────────────────────────────────────────
+const rawSales = [
+  {id:1001,date:"2023-01-05",cid:"C001",pid:"P003",qty:2,price:29.99,disc:0,region:"North"},
+  {id:1002,date:"2023-01-07",cid:"C002",pid:"P001",qty:1,price:149.99,disc:0.1,region:"South"},
+  {id:1003,date:"2023-01-10",cid:"C003",pid:"P002",qty:3,price:49.99,disc:0,region:"East"},
+  {id:1004,date:"2023-01-14",cid:"C001",pid:"P004",qty:1,price:89.99,disc:0.05,region:"North"},
+  {id:1005,date:"2023-01-18",cid:"C004",pid:"P001",qty:2,price:149.99,disc:0,region:"West"},
+  {id:1006,date:"2023-01-22",cid:"C005",pid:"P003",qty:4,price:29.99,disc:0.1,region:"South"},
+  {id:1007,date:"2023-01-25",cid:"C002",pid:"P005",qty:1,price:199.99,disc:0,region:"East"},
+  {id:1008,date:"2023-02-02",cid:"C006",pid:"P002",qty:2,price:49.99,disc:0,region:"North"},
+  {id:1009,date:"2023-02-05",cid:"C003",pid:"P001",qty:1,price:149.99,disc:0.15,region:"East"},
+  {id:1010,date:"2023-02-09",cid:"C007",pid:"P004",qty:3,price:89.99,disc:0,region:"West"},
+  {id:1011,date:"2023-02-13",cid:"C004",pid:"P003",qty:2,price:29.99,disc:0,region:"West"},
+  {id:1012,date:"2023-02-16",cid:"C008",pid:"P005",qty:1,price:199.99,disc:0.1,region:"South"},
+  {id:1013,date:"2023-02-20",cid:"C001",pid:"P002",qty:2,price:49.99,disc:0,region:"North"},
+  {id:1014,date:"2023-02-24",cid:"C005",pid:"P001",qty:1,price:149.99,disc:0,region:"South"},
+  {id:1015,date:"2023-03-01",cid:"C009",pid:"P004",qty:2,price:89.99,disc:0.05,region:"East"},
+  {id:1016,date:"2023-03-05",cid:"C002",pid:"P003",qty:3,price:29.99,disc:0,region:"East"},
+  {id:1017,date:"2023-03-08",cid:"C010",pid:"P005",qty:1,price:199.99,disc:0,region:"North"},
+  {id:1018,date:"2023-03-12",cid:"C006",pid:"P001",qty:2,price:149.99,disc:0.1,region:"North"},
+  {id:1019,date:"2023-03-15",cid:"C007",pid:"P002",qty:1,price:49.99,disc:0,region:"West"},
+  {id:1020,date:"2023-03-19",cid:"C003",pid:"P004",qty:3,price:89.99,disc:0,region:"East"},
+  {id:1021,date:"2023-03-22",cid:"C008",pid:"P003",qty:5,price:29.99,disc:0.05,region:"South"},
+  {id:1022,date:"2023-03-26",cid:"C004",pid:"P005",qty:1,price:199.99,disc:0,region:"West"},
+  {id:1023,date:"2023-04-02",cid:"C009",pid:"P001",qty:2,price:149.99,disc:0.1,region:"East"},
+  {id:1024,date:"2023-04-06",cid:"C010",pid:"P002",qty:3,price:49.99,disc:0,region:"North"},
+  {id:1025,date:"2023-04-10",cid:"C001",pid:"P004",qty:1,price:89.99,disc:0,region:"North"},
+  {id:1026,date:"2023-04-14",cid:"C005",pid:"P003",qty:2,price:29.99,disc:0,region:"South"},
+  {id:1027,date:"2023-04-18",cid:"C011",pid:"P001",qty:1,price:149.99,disc:0.05,region:"West"},
+  {id:1028,date:"2023-04-22",cid:"C006",pid:"P005",qty:2,price:199.99,disc:0,region:"North"},
+  {id:1029,date:"2023-04-26",cid:"C012",pid:"P002",qty:1,price:49.99,disc:0,region:"East"},
+  {id:1030,date:"2023-04-30",cid:"C002",pid:"P004",qty:4,price:89.99,disc:0.1,region:"East"},
+  {id:1031,date:"2023-05-04",cid:"C007",pid:"P001",qty:1,price:149.99,disc:0,region:"West"},
+  {id:1032,date:"2023-05-08",cid:"C003",pid:"P003",qty:3,price:29.99,disc:0,region:"East"},
+  {id:1033,date:"2023-05-12",cid:"C011",pid:"P005",qty:1,price:199.99,disc:0,region:"West"},
+  {id:1034,date:"2023-05-16",cid:"C008",pid:"P002",qty:2,price:49.99,disc:0.05,region:"South"},
+  {id:1035,date:"2023-05-20",cid:"C012",pid:"P001",qty:1,price:149.99,disc:0,region:"East"},
+  {id:1036,date:"2023-05-24",cid:"C009",pid:"P004",qty:3,price:89.99,disc:0,region:"East"},
+  {id:1037,date:"2023-05-28",cid:"C010",pid:"P003",qty:2,price:29.99,disc:0.1,region:"North"},
+  {id:1038,date:"2023-06-01",cid:"C001",pid:"P005",qty:1,price:199.99,disc:0,region:"North"},
+  {id:1039,date:"2023-06-05",cid:"C004",pid:"P002",qty:4,price:49.99,disc:0,region:"West"},
+  {id:1040,date:"2023-06-09",cid:"C005",pid:"P001",qty:2,price:149.99,disc:0.05,region:"South"},
+  {id:1041,date:"2023-06-13",cid:"C013",pid:"P004",qty:1,price:89.99,disc:0,region:"East"},
+  {id:1042,date:"2023-06-17",cid:"C006",pid:"P003",qty:3,price:29.99,disc:0,region:"North"},
+  {id:1043,date:"2023-06-21",cid:"C013",pid:"P005",qty:1,price:199.99,disc:0.1,region:"East"},
+  {id:1044,date:"2023-06-25",cid:"C007",pid:"P001",qty:2,price:149.99,disc:0,region:"West"},
+  {id:1045,date:"2023-06-29",cid:"C014",pid:"P002",qty:1,price:49.99,disc:0,region:"South"},
+  {id:1046,date:"2023-07-03",cid:"C008",pid:"P004",qty:2,price:89.99,disc:0,region:"South"},
+  {id:1047,date:"2023-07-07",cid:"C002",pid:"P003",qty:4,price:29.99,disc:0.05,region:"East"},
+  {id:1048,date:"2023-07-11",cid:"C014",pid:"P001",qty:1,price:149.99,disc:0,region:"South"},
+  {id:1049,date:"2023-07-15",cid:"C009",pid:"P005",qty:2,price:199.99,disc:0,region:"East"},
+  {id:1050,date:"2023-07-19",cid:"C010",pid:"P002",qty:3,price:49.99,disc:0.1,region:"North"},
+  {id:1051,date:"2023-07-23",cid:"C011",pid:"P001",qty:1,price:149.99,disc:0,region:"West"},
+  {id:1052,date:"2023-07-27",cid:"C003",pid:"P004",qty:2,price:89.99,disc:0,region:"East"},
+  {id:1053,date:"2023-07-31",cid:"C012",pid:"P003",qty:3,price:29.99,disc:0,region:"East"},
+  {id:1054,date:"2023-08-04",cid:"C004",pid:"P005",qty:1,price:199.99,disc:0.05,region:"West"},
+  {id:1055,date:"2023-08-08",cid:"C013",pid:"P002",qty:2,price:49.99,disc:0,region:"East"},
+  {id:1056,date:"2023-08-12",cid:"C005",pid:"P001",qty:1,price:149.99,disc:0,region:"South"},
+  {id:1057,date:"2023-08-16",cid:"C014",pid:"P004",qty:3,price:89.99,disc:0.1,region:"South"},
+  {id:1058,date:"2023-08-20",cid:"C001",pid:"P003",qty:2,price:29.99,disc:0,region:"North"},
+  {id:1059,date:"2023-08-24",cid:"C006",pid:"P005",qty:1,price:199.99,disc:0,region:"North"},
+  {id:1060,date:"2023-08-28",cid:"C007",pid:"P001",qty:2,price:149.99,disc:0.05,region:"West"},
+  {id:1061,date:"2023-09-01",cid:"C015",pid:"P002",qty:1,price:49.99,disc:0,region:"East"},
+  {id:1062,date:"2023-09-05",cid:"C008",pid:"P004",qty:3,price:89.99,disc:0,region:"South"},
+  {id:1063,date:"2023-09-09",cid:"C015",pid:"P001",qty:1,price:149.99,disc:0.1,region:"East"},
+  {id:1064,date:"2023-09-13",cid:"C009",pid:"P003",qty:4,price:29.99,disc:0,region:"East"},
+  {id:1065,date:"2023-09-17",cid:"C010",pid:"P005",qty:1,price:199.99,disc:0,region:"North"},
+  {id:1066,date:"2023-09-21",cid:"C011",pid:"P002",qty:2,price:49.99,disc:0.05,region:"West"},
+  {id:1067,date:"2023-09-25",cid:"C002",pid:"P001",qty:1,price:149.99,disc:0,region:"East"},
+  {id:1068,date:"2023-09-29",cid:"C012",pid:"P004",qty:2,price:89.99,disc:0,region:"East"},
+  {id:1069,date:"2023-10-03",cid:"C003",pid:"P003",qty:3,price:29.99,disc:0.1,region:"East"},
+  {id:1070,date:"2023-10-07",cid:"C013",pid:"P005",qty:1,price:199.99,disc:0,region:"East"},
+  {id:1071,date:"2023-10-11",cid:"C004",pid:"P001",qty:2,price:149.99,disc:0,region:"West"},
+  {id:1072,date:"2023-10-15",cid:"C014",pid:"P002",qty:1,price:49.99,disc:0,region:"South"},
+  {id:1073,date:"2023-10-19",cid:"C015",pid:"P004",qty:3,price:89.99,disc:0.05,region:"East"},
+  {id:1074,date:"2023-10-23",cid:"C005",pid:"P003",qty:2,price:29.99,disc:0,region:"South"},
+  {id:1075,date:"2023-10-27",cid:"C006",pid:"P001",qty:1,price:149.99,disc:0,region:"North"},
+  {id:1076,date:"2023-10-31",cid:"C007",pid:"P005",qty:1,price:199.99,disc:0.1,region:"West"},
+  {id:1077,date:"2023-11-04",cid:"C001",pid:"P002",qty:3,price:49.99,disc:0,region:"North"},
+  {id:1078,date:"2023-11-08",cid:"C008",pid:"P001",qty:2,price:149.99,disc:0,region:"South"},
+  {id:1079,date:"2023-11-12",cid:"C009",pid:"P004",qty:1,price:89.99,disc:0.05,region:"East"},
+  {id:1080,date:"2023-11-16",cid:"C010",pid:"P003",qty:4,price:29.99,disc:0,region:"North"},
+  {id:1081,date:"2023-11-20",cid:"C011",pid:"P005",qty:1,price:199.99,disc:0,region:"West"},
+  {id:1082,date:"2023-11-24",cid:"C012",pid:"P001",qty:2,price:149.99,disc:0.1,region:"East"},
+  {id:1083,date:"2023-11-28",cid:"C002",pid:"P002",qty:3,price:49.99,disc:0,region:"East"},
+  {id:1084,date:"2023-12-02",cid:"C013",pid:"P004",qty:1,price:89.99,disc:0,region:"East"},
+  {id:1085,date:"2023-12-06",cid:"C014",pid:"P001",qty:2,price:149.99,disc:0.05,region:"South"},
+  {id:1086,date:"2023-12-10",cid:"C015",pid:"P003",qty:3,price:29.99,disc:0,region:"East"},
+  {id:1087,date:"2023-12-14",cid:"C003",pid:"P005",qty:1,price:199.99,disc:0,region:"East"},
+  {id:1088,date:"2023-12-18",cid:"C004",pid:"P002",qty:4,price:49.99,disc:0.1,region:"West"},
+  {id:1089,date:"2023-12-22",cid:"C005",pid:"P001",qty:1,price:149.99,disc:0,region:"South"},
+  {id:1090,date:"2023-12-26",cid:"C006",pid:"P004",qty:2,price:89.99,disc:0,region:"North"},
+  {id:1091,date:"2023-12-30",cid:"C007",pid:"P003",qty:3,price:29.99,disc:0,region:"West"},
+];
+
+const customers = {
+  C001:{name:"James Carter",segment:"Premium"}, C002:{name:"Sofia Nguyen",segment:"Standard"},
+  C003:{name:"Marcus Williams",segment:"Standard"}, C004:{name:"Priya Patel",segment:"Premium"},
+  C005:{name:"Tyler Brooks",segment:"Standard"}, C006:{name:"Aisha Johnson",segment:"Premium"},
+  C007:{name:"Daniel Kim",segment:"Standard"}, C008:{name:"Emma Rodriguez",segment:"Standard"},
+  C009:{name:"Noah Thompson",segment:"Premium"}, C010:{name:"Leila Martinez",segment:"Standard"},
+  C011:{name:"Ethan Davis",segment:"Standard"}, C012:{name:"Zoe Wilson",segment:"Premium"},
+  C013:{name:"Caleb Anderson",segment:"Standard"}, C014:{name:"Maya Thomas",segment:"Standard"},
+  C015:{name:"Owen Jackson",segment:"Standard"}
+};
+
+const products = {
+  P001:{name:"Wireless Headphones",category:"Electronics",cost:75},
+  P002:{name:"Yoga Mat",category:"Fitness",cost:18},
+  P003:{name:"Reusable Water Bottle",category:"Accessories",cost:8},
+  P004:{name:"Running Shoes",category:"Footwear",cost:45},
+  P005:{name:"Smart Watch",category:"Electronics",cost:95}
+};
+
+const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ─── CHART INSTANCES ──────────────────────────────────────────────────────────
+let lineChart, donutChart, barChart, scatterChart, segmentChart;
+
+function getRevenue(row) { return row.qty * row.price * (1 - row.disc); }
+function getProfit(row) { return getRevenue(row) - products[row.pid].cost * row.qty; }
+function getMonth(row) { return parseInt(row.date.split("-")[1]) - 1; }
+
+function filteredData() {
+  const region = document.getElementById("filter-region").value;
+  const segment = document.getElementById("filter-segment").value;
+  const category = document.getElementById("filter-category").value;
+  return rawSales.filter(r => {
+    if (region !== "All" && r.region !== region) return false;
+    if (segment !== "All" && customers[r.cid].segment !== segment) return false;
+    if (category !== "All" && products[r.pid].category !== category) return false;
+    return true;
+  });
+}
+
+function applyFilters() {
+  const data = filteredData();
+  updateKPIs(data);
+  updateLineChart(data);
+  updateDonutChart(data);
+  updateBarChart(data);
+  updateScatterChart(data);
+  updateSegmentChart(data);
+  updateTable(data);
+}
+
+function resetFilters() {
+  document.getElementById("filter-region").value = "All";
+  document.getElementById("filter-segment").value = "All";
+  document.getElementById("filter-category").value = "All";
+  applyFilters();
+}
+
+// ─── KPIs ────────────────────────────────────────────────────────────────────
+function updateKPIs(data) {
+  const rev = data.reduce((s,r) => s + getRevenue(r), 0);
+  const profit = data.reduce((s,r) => s + getProfit(r), 0);
+  const orders = data.length;
+  const margin = rev > 0 ? (profit / rev * 100) : 0;
+
+  document.getElementById("kpi-revenue").textContent = "$" + rev.toLocaleString("en-US",{maximumFractionDigits:0});
+  document.getElementById("kpi-revenue-sub").textContent = `${orders} transactions · $${(rev/orders||0).toFixed(0)} avg`;
+  document.getElementById("kpi-orders").textContent = orders;
+  document.getElementById("kpi-orders-sub").textContent = `${new Set(data.map(r=>r.cid)).size} unique customers`;
+  document.getElementById("kpi-aov").textContent = "$" + (rev/orders||0).toFixed(2);
+  document.getElementById("kpi-aov-sub").textContent = `Total qty: ${data.reduce((s,r)=>s+r.qty,0)} units`;
+  document.getElementById("kpi-margin").textContent = margin.toFixed(1) + "%";
+  const cls = margin > 40 ? "up" : "down";
+  document.getElementById("kpi-margin-sub").className = "kpi-delta " + cls;
+  document.getElementById("kpi-margin-sub").textContent = `Profit: $${profit.toLocaleString("en-US",{maximumFractionDigits:0})}`;
+}
+
+// ─── LINE CHART ──────────────────────────────────────────────────────────────
+function updateLineChart(data) {
+  const monthly = Array(12).fill(0);
+  data.forEach(r => monthly[getMonth(r)] += getRevenue(r));
+  if (lineChart) {
+    lineChart.data.datasets[0].data = monthly;
+    lineChart.update();
+  }
+}
+
+function initLineChart(data) {
+  const monthly = Array(12).fill(0);
+  data.forEach(r => monthly[getMonth(r)] += getRevenue(r));
+  const ctx = document.getElementById("lineChart").getContext("2d");
+  lineChart = new Chart(ctx, {
+    type:"line",
+    data:{
+      labels: months,
+      datasets:[{
+        label:"Revenue",
+        data: monthly,
+        borderColor:"#6c63ff",
+        backgroundColor:"rgba(108,99,255,0.08)",
+        borderWidth:2.5,
+        pointBackgroundColor:"#6c63ff",
+        pointRadius:4,
+        pointHoverRadius:6,
+        tension:0.4,
+        fill:true
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:"#1a1d27",borderColor:"#2e3250",borderWidth:1,
+        titleColor:"#e8eaf6",bodyColor:"#7b80a8",
+        callbacks:{label:c=>"$"+c.parsed.y.toLocaleString("en-US",{maximumFractionDigits:0})}
+      }},
+      scales:{
+        x:{grid:{color:"rgba(46,50,80,0.5)"},ticks:{color:"#7b80a8",font:{size:11}}},
+        y:{grid:{color:"rgba(46,50,80,0.5)"},ticks:{color:"#7b80a8",font:{size:11},callback:v=>"$"+v.toLocaleString()}}
+      }
+    }
+  });
+}
+
+// ─── DONUT CHART ─────────────────────────────────────────────────────────────
+function updateDonutChart(data) {
+  const regions = {North:0,South:0,East:0,West:0};
+  data.forEach(r => regions[r.region] += getRevenue(r));
+  if (donutChart) {
+    donutChart.data.datasets[0].data = Object.values(regions);
+    donutChart.update();
+  }
+}
+
+function initDonutChart(data) {
+  const regions = {North:0,South:0,East:0,West:0};
+  data.forEach(r => regions[r.region] += getRevenue(r));
+  const ctx = document.getElementById("donutChart").getContext("2d");
+  donutChart = new Chart(ctx, {
+    type:"doughnut",
+    data:{
+      labels: Object.keys(regions),
+      datasets:[{
+        data: Object.values(regions),
+        backgroundColor:["#6c63ff","#00d4aa","#ff6b6b","#ffa94d"],
+        borderColor:"#1a1d27", borderWidth:3, hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:"bottom",labels:{color:"#7b80a8",font:{size:11},padding:12,boxWidth:10}},
+        tooltip:{
+          backgroundColor:"#1a1d27",borderColor:"#2e3250",borderWidth:1,
+          titleColor:"#e8eaf6",bodyColor:"#7b80a8",
+          callbacks:{label:c=>" $"+c.parsed.toLocaleString("en-US",{maximumFractionDigits:0})}
+        }
+      }
+    }
+  });
+}
+
+// ─── BAR CHART ───────────────────────────────────────────────────────────────
+function updateBarChart(data) {
+  const cats = {Electronics:0,Fitness:0,Footwear:0,Accessories:0};
+  data.forEach(r => cats[products[r.pid].category] += getRevenue(r));
+  if (barChart) {
+    barChart.data.datasets[0].data = Object.values(cats);
+    barChart.update();
+  }
+}
+
+function initBarChart(data) {
+  const cats = {Electronics:0,Fitness:0,Footwear:0,Accessories:0};
+  data.forEach(r => cats[products[r.pid].category] += getRevenue(r));
+  const ctx = document.getElementById("barChart").getContext("2d");
+  barChart = new Chart(ctx, {
+    type:"bar",
+    data:{
+      labels: Object.keys(cats),
+      datasets:[{
+        label:"Revenue",
+        data: Object.values(cats),
+        backgroundColor:["rgba(108,99,255,0.7)","rgba(0,212,170,0.7)","rgba(255,169,77,0.7)","rgba(255,107,107,0.7)"],
+        borderRadius:6, borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:"#1a1d27",borderColor:"#2e3250",borderWidth:1,
+        titleColor:"#e8eaf6",bodyColor:"#7b80a8",
+        callbacks:{label:c=>"$"+c.parsed.y.toLocaleString("en-US",{maximumFractionDigits:0})}
+      }},
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#7b80a8",font:{size:11}}},
+        y:{grid:{color:"rgba(46,50,80,0.5)"},ticks:{color:"#7b80a8",font:{size:11},callback:v=>"$"+v.toLocaleString()}}
+      }
+    }
+  });
+}
+
+// ─── SCATTER CHART ───────────────────────────────────────────────────────────
+function updateScatterChart(data) {
+  const byCustomer = {};
+  data.forEach(r => {
+    if (!byCustomer[r.cid]) byCustomer[r.cid] = {orders:0,rev:0,seg:customers[r.cid].segment};
+    byCustomer[r.cid].orders++;
+    byCustomer[r.cid].rev += getRevenue(r);
+  });
+  const points = Object.values(byCustomer).map(c=>({x:c.orders,y:c.rev,seg:c.seg}));
+  const premium = points.filter(p=>p.seg==="Premium");
+  const standard = points.filter(p=>p.seg==="Standard");
+  if (scatterChart) {
+    scatterChart.data.datasets[0].data = premium;
+    scatterChart.data.datasets[1].data = standard;
+    scatterChart.update();
+  }
+}
+
+function initScatterChart(data) {
+  const byCustomer = {};
+  data.forEach(r => {
+    if (!byCustomer[r.cid]) byCustomer[r.cid] = {orders:0,rev:0,seg:customers[r.cid].segment};
+    byCustomer[r.cid].orders++;
+    byCustomer[r.cid].rev += getRevenue(r);
+  });
+  const points = Object.values(byCustomer).map(c=>({x:c.orders,y:c.rev,seg:c.seg}));
+  const ctx = document.getElementById("scatterChart").getContext("2d");
+  scatterChart = new Chart(ctx, {
+    type:"scatter",
+    data:{datasets:[
+      {label:"Premium",data:points.filter(p=>p.seg==="Premium"),backgroundColor:"rgba(108,99,255,0.8)",pointRadius:7},
+      {label:"Standard",data:points.filter(p=>p.seg==="Standard"),backgroundColor:"rgba(0,212,170,0.6)",pointRadius:6}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:"bottom",labels:{color:"#7b80a8",font:{size:11},padding:10,boxWidth:8}},
+        tooltip:{
+          backgroundColor:"#1a1d27",borderColor:"#2e3250",borderWidth:1,
+          titleColor:"#e8eaf6",bodyColor:"#7b80a8",
+          callbacks:{label:c=>`Orders: ${c.parsed.x} · Rev: $${c.parsed.y.toFixed(0)}`}
+        }
+      },
+      scales:{
+        x:{grid:{color:"rgba(46,50,80,0.5)"},ticks:{color:"#7b80a8",font:{size:11}},title:{display:true,text:"Orders",color:"#7b80a8",font:{size:10}}},
+        y:{grid:{color:"rgba(46,50,80,0.5)"},ticks:{color:"#7b80a8",font:{size:11},callback:v=>"$"+v},title:{display:true,text:"Revenue",color:"#7b80a8",font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ─── SEGMENT CHART ───────────────────────────────────────────────────────────
+function updateSegmentChart(data) {
+  const prem = data.filter(r=>customers[r.cid].segment==="Premium").reduce((s,r)=>s+getRevenue(r),0);
+  const std = data.filter(r=>customers[r.cid].segment==="Standard").reduce((s,r)=>s+getRevenue(r),0);
+  if (segmentChart) {
+    segmentChart.data.datasets[0].data = [prem, std];
+    segmentChart.update();
+  }
+}
+
+function initSegmentChart(data) {
+  const prem = data.filter(r=>customers[r.cid].segment==="Premium").reduce((s,r)=>s+getRevenue(r),0);
+  const std = data.filter(r=>customers[r.cid].segment==="Standard").reduce((s,r)=>s+getRevenue(r),0);
+  const ctx = document.getElementById("segmentChart").getContext("2d");
+  segmentChart = new Chart(ctx, {
+    type:"pie",
+    data:{
+      labels:["Premium","Standard"],
+      datasets:[{data:[prem,std],backgroundColor:["rgba(108,99,255,0.8)","rgba(0,212,170,0.6)"],borderColor:"#1a1d27",borderWidth:3,hoverOffset:6}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:"bottom",labels:{color:"#7b80a8",font:{size:11},padding:12,boxWidth:10}},
+        tooltip:{
+          backgroundColor:"#1a1d27",borderColor:"#2e3250",borderWidth:1,
+          titleColor:"#e8eaf6",bodyColor:"#7b80a8",
+          callbacks:{label:c=>" $"+c.parsed.toLocaleString("en-US",{maximumFractionDigits:0})}
+        }
+      }
+    }
+  });
+}
+
+// ─── TABLE ───────────────────────────────────────────────────────────────────
+function updateTable(data) {
+  const byCustomer = {};
+  data.forEach(r => {
+    if (!byCustomer[r.cid]) byCustomer[r.cid] = {name:customers[r.cid].name,segment:customers[r.cid].segment,orders:0,rev:0};
+    byCustomer[r.cid].orders++;
+    byCustomer[r.cid].rev += getRevenue(r);
+  });
+  const sorted = Object.values(byCustomer).sort((a,b)=>b.rev-a.rev);
+  const totalRev = sorted.reduce((s,c)=>s+c.rev,0);
+  const tbody = document.getElementById("customer-table");
+  tbody.innerHTML = sorted.map((c,i) => {
+    const pct = totalRev > 0 ? c.rev/totalRev*100 : 0;
+    const segClass = c.segment === "Premium" ? "seg-premium" : "seg-standard";
+    return `<tr>
+      <td style="color:var(--muted);font-family:var(--mono)">${i+1}</td>
+      <td style="font-weight:500">${c.name}</td>
+      <td><span class="segment-badge ${segClass}">${c.segment}</span></td>
+      <td style="font-family:var(--mono);color:var(--muted)">${c.orders}</td>
+      <td style="font-family:var(--mono);font-weight:500">$${c.rev.toLocaleString("en-US",{maximumFractionDigits:0})}</td>
+      <td>
+        <div class="bar-cell">
+          <div class="mini-bar-bg"><div class="mini-bar" style="width:${pct}%"></div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);min-width:32px">${pct.toFixed(1)}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  Chart.defaults.color = "#7b80a8";
+  Chart.defaults.borderColor = "rgba(46,50,80,0.5)";
+  const data = filteredData();
+  updateKPIs(data);
+  initLineChart(data);
+  initDonutChart(data);
+  initBarChart(data);
+  initScatterChart(data);
+  initSegmentChart(data);
+  updateTable(data);
+});
+</script>
+</body>
+</html>
