@@ -1,12 +1,12 @@
 # 📊 Retail Sales & Customer Analytics Dashboard
 
-An interactive business intelligence dashboard replicating a Power BI report, built to demonstrate data analysis, transformation, and visualization skills for a Data Analyst role.
+An interactive business intelligence dashboard replicating a Power BI report, built to demonstrate data analysis, transformation, and visualization.
 
 ---
 
 ## 🔍 Project Overview
 
-This project analyzes 12 months of retail sales data (Jan–Dec 2023) for a fictional multi-region retailer. The goal was to build a dashboard that mirrors what a Power BI analyst would deliver — complete with KPI cards, trend analysis, customer segmentation, and interactive slicers.
+This project analyzes 12 months of retail sales data (Jan–Dec 2023) for a multi-region retailer. The goal was to build a dashboard that provides KPI cards, trend analysis, customer segmentation, and interactive slicers.
 
 The dataset covers **91 transactions**, **15 customers**, **5 products** across **4 regions**, with product categories spanning Electronics, Fitness, Footwear, and Accessories.
 
@@ -34,7 +34,7 @@ powerbi-retail-analytics/
 2. Open `dashboard.html` in any browser (Chrome, Firefox, Safari)
 3. No server or install required — it runs entirely in the browser
 
-> **Live version:** [Link to GitHub Pages if deployed]
+> 
 
 ---
 
