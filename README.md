@@ -30,7 +30,7 @@ powerbi-retail-analytics/
 
 ## 🚀 How to View the Dashboard
 
-1. Clone or download this repository
+1. Download dashboard.html from the code section of this repository
 2. Open `dashboard.html` in any browser (Chrome, Firefox, Safari)
 3. No server or install required — it runs entirely in the browser
 
